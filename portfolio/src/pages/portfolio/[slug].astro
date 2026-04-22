@@ -1,0 +1,320 @@
+---
+import { getCollection } from 'astro:content';
+
+// Components
+import CallToAction from '../../components/CallToAction.astro';
+import ContactCTA from '../../components/ContactCTA.astro';
+import Grid from '../../components/Grid.astro';
+import Hero from '../../components/Hero.astro';
+import Icon from '../../components/Icon.astro';
+import Pill from '../../components/Pill.astro';
+import Skills from '../../components/Skills.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// ✅ Dynamic routes (based on folders)
+export async function getStaticPaths() {
+  const entries = await getCollection('portfolios');
+
+  const uniqueUsers = [
+    ...new Set(
+      entries
+        .map((e) => e.id?.split('/')[0])
+        .filter(Boolean)
+    ),
+  ];
+
+  return uniqueUsers.map((slug) => ({
+    params: { slug },
+  }));
+}
+
+// ✅ Get slug
+const { slug } = Astro.params;
+
+// ✅ ALL BLOG FILES
+const entries = await getCollection('portfolios');
+
+// ✅ FILTER BLOGS FOR THIS USER
+const userBlogs = entries.filter((e) =>
+  e.id.startsWith(`${slug}/`)
+);
+
+// ✅ DERIVE PROFILE FROM FIRST BLOG
+const firstBlog = userBlogs[0];
+
+const hero = {
+  title: `Hi, I'm ${firstBlog?.data.author ?? slug}`,
+  tagline: firstBlog?.data.position ?? "Contributor",
+  image: firstBlog?.data.avatar ?? "",
+  image_alt: `${slug} profile`,
+  roles: [{ name: "Developer" }]
+};
+
+// 🔥 PROJECTS FROM YAML
+const allProjects = (await getCollection('projects'))[0]?.data ?? [];
+
+const projects = allProjects.filter((project) =>
+  project.people.includes(slug)
+);
+---
+
+<BaseLayout>
+  <div class="stack gap-20 lg:gap-48">
+
+    <!-- HERO -->
+    <div class="wrapper stack gap-8 lg:gap-20">
+      <header class="hero">
+  <Hero title={hero.title} tagline={hero.tagline} align="start">
+    <div class="roles">
+      {hero.roles?.map((role) => (
+        <Pill>{role.name}</Pill>
+      ))}
+    </div>
+  </Hero>
+
+  <!-- ✅ INITIAL AVATAR -->
+  <div class="avatar">
+    {(firstBlog?.data.author ?? slug).charAt(0).toUpperCase()}
+  </div>
+</header>
+
+      <Skills />
+    </div>
+
+    <!-- MAIN -->
+    <main class="wrapper stack gap-20 lg:gap-48">
+
+      <!-- PROJECTS -->
+      <section class="section with-background with-cta">
+        <header class="section-header stack gap-2 lg:gap-4">
+          <h3>Projects</h3>
+          <p>Projects this person is contributing to.</p>
+        </header>
+
+        <div class="gallery">
+          <ul class="projects">
+            {
+              projects.length > 0 ? (
+                projects.map((project) => (
+                  <li class="project-card">
+                    <h4>{project.name}</h4>
+
+                    <p class="project-desc">{project.description}</p>
+
+                    <div class="links">
+                      <a href={`/projects/${project.slug}`}>
+                        View Project →
+                      </a>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <p>No projects assigned.</p>
+              )
+            }
+          </ul>
+        </div>
+
+        <div class="cta">
+          <CallToAction href={`/projects`}>
+            View All Projects
+            <Icon icon="arrow-right" size="1.2em" />
+          </CallToAction>
+        </div>
+      </section>
+
+      <!-- BLOGS -->
+      <section class="section with-background bg-variant">
+        <header class="section-header stack gap-2 lg:gap-4">
+          <h3>Blogs</h3>
+        </header>
+
+        <div class="gallery">
+          <Grid variant="small">
+            {
+              userBlogs.length > 0 ? (
+                userBlogs.map((blog) => (
+                  <li class="blog-card">
+                    <a
+                      href={`/portfolio/${slug}/${blog.id.split('/')[1]}`}
+                      class="blog-link"
+                    >
+                      <div class="blog-content">
+                        <h4 class="blog-title">{blog.data.title}</h4>
+                      </div>
+
+                      <p class="blog-meta">
+                        Read article →
+                      </p>
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <p>No blogs available.</p>
+              )
+            }
+          </Grid>
+        </div>
+      </section>
+
+    </main>
+
+    <ContactCTA />
+  </div>
+</BaseLayout>
+
+<style>
+/* ================= HERO ================= */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.roles {
+  display: none;
+}
+
+.hero img {
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+@media (min-width: 50em) {
+  .hero {
+    display: grid;
+    grid-template-columns: 6fr 4fr;
+    gap: 3.75rem;
+  }
+
+  .roles {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .hero img {
+    aspect-ratio: 3 / 4;
+    border-radius: 4.5rem;
+  }
+}
+
+/* ================= SECTION ================= */
+.section {
+  display: grid;
+  gap: 2rem;
+}
+
+.section-header {
+  text-align: center;
+  max-width: 50ch;
+  color: var(--gray-300);
+}
+
+/* ================= PROJECTS ================= */
+.projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.project-desc {
+  font-size: var(--text-sm);
+  color: var(--gray-300);
+  margin: 0.4rem 0 0.8rem;
+}
+
+.links {
+  margin-top: auto;
+}
+
+.links a {
+  text-decoration: none;
+  color: var(--accent-regular);
+}
+
+/* ================= BLOGS ================= */
+.blog-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.4rem;
+  border-radius: 1.2rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
+  text-decoration: none;
+  min-height: 140px;
+  transition: all 0.25s ease;
+}
+
+.blog-link:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-regular);
+}
+
+.blog-content {
+  flex-grow: 1;
+}
+
+.blog-title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--gray-0);
+}
+
+.blog-meta {
+  font-size: var(--text-sm);
+  color: var(--accent-regular);
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+/* ================= CTA ================= */
+.cta {
+  display: flex;
+  justify-content: center;
+}
+
+/* AVATAR */
+.avatar {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 4rem;
+  font-weight: bold;
+
+  background: var(--accent-regular);
+  color: white;
+
+  box-shadow: var(--shadow-md);
+}
+
+/* RESPONSIVE */
+@media (min-width: 50em) {
+  .avatar {
+    width: 260px;
+    height: 260px;
+    font-size: 6rem;
+  }
+}
+</style>

@@ -1,0 +1,206 @@
+---
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
+import { marked } from 'marked';
+import { getCollection } from 'astro:content';
+
+import ContactCTA from '../../../components/ContactCTA.astro';
+import Hero from '../../../components/Hero.astro';
+import Icon from '../../../components/Icon.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+// ✅ CONFIG
+const OWNER = "aganitha";
+const REPO = "tech-coe";
+
+// ✅ Dynamic paths
+export async function getStaticPaths() {
+  const base = './src/content/portfolios';
+  const users = fs.readdirSync(base);
+
+  const paths = [];
+
+  for (const user of users) {
+    const userDir = path.join(base, user);
+    const files = fs.readdirSync(userDir);
+
+    files
+      .filter((f) => f.endsWith('.md'))
+      .forEach((file) => {
+        paths.push({
+          params: {
+            slug: user,
+            blog: file.replace('.md', ''),
+          },
+        });
+      });
+  }
+
+  return paths;
+}
+
+// ✅ Params
+const { slug, blog } = Astro.params;
+
+// ✅ Read blog file
+const filePath = path.join(
+  'src/content/portfolios',
+  slug,
+  `${blog}.md`
+);
+
+const file = fs.readFileSync(filePath, 'utf-8');
+const { data, content } = matter(file);
+
+// ==============================
+// 🔥 GITHUB CO-AUTHOR FETCH
+// ==============================
+
+// path inside repo
+const githubFilePath = `src/content/portfolios/${slug}/${blog}.md`;
+
+let contributors = [];
+
+try {
+  const res = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${githubFilePath}`,
+    {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.GITHUB_TOKEN || ''}`,
+      },
+    }
+  );
+
+  const commits = await res.json();
+
+  contributors = [
+    ...new Set(
+      commits
+        .map((c) => c.author?.login)
+        .filter(Boolean)
+    ),
+  ];
+} catch (err) {
+  console.error("GitHub API failed:", err);
+}
+
+// ==============================
+// 🔥 MAP TO YOUR PROFILES
+// ==============================
+
+const allProfiles = await getCollection('portfolios');
+
+const coauthorProfiles = allProfiles.filter((p) => {
+  const id = p.id.split('/')[0];
+  return contributors.includes(id);
+});
+
+// ==============================
+// 🔥 MARKDOWN → HTML
+// ==============================
+
+const headings = [];
+
+const processedContent = content.replace(/^##\s(.+)/gm, (_, title) => {
+  const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  headings.push({ title, id });
+  return `## ${title}\n<span id="${id}"></span>`;
+});
+
+const html = marked.parse(processedContent);
+---
+
+<BaseLayout title={data.title}>
+  <div class="page">
+
+    <!-- HEADER -->
+    <header class="header wrapper">
+      <a class="back-link" href={`/portfolio/${slug}`}>
+        <Icon icon="arrow-left" /> Back to Profile
+      </a>
+
+      <Hero title={data.title} tagline={`By ${data.author}`} align="start" />
+    </header>
+
+    <!-- BODY -->
+    <div class="layout wrapper">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <h4>On this page</h4>
+        <ul>
+          {headings.map((h) => (
+            <li>
+              <a href={`#${h.id}`}>{h.title}</a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="content">
+
+        <article class="blog-content" set:html={html}></article>
+
+        <!-- 🔥 CO-AUTHORS SECTION -->
+        {coauthorProfiles.length > 1 && (
+          <div class="coauthors">
+            <h3>Contributors</h3>
+
+            <div class="coauthor-grid">
+              {coauthorProfiles.map((person) => {
+                const id = person.id.split('/')[0];
+
+                return (
+                  <a href={`/portfolio/${id}`} class="coauthor-card">
+                    <div class="avatar">
+                      {id.charAt(0).toUpperCase()}
+                    </div>
+                    <p>{id}</p>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+    </div>
+
+    <ContactCTA />
+
+  </div>
+</BaseLayout>
+
+<style>
+.coauthors {
+  margin-top: 4rem;
+}
+
+.coauthor-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.coauthor-card {
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--accent-regular);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+</style>

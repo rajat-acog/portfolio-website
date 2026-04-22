@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const data = (await getCollection('projects'))[0]?.data ?? [];
+---
+
+<BaseLayout>
+  <main class="wrapper">
+    <h1>Projects</h1>
+
+    <div class="grid">
+      {
+        data.map((project) => (
+          <a href={`/projects/${project.slug}`} class="card">
+            <h3>{project.name}</h3>
+            <p>{project.description}</p>
+          </a>
+        ))
+      }
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+.grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
+  text-decoration: none;
+  color: inherit;
+}
+</style>

@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Search">
+  <main class="wrapper search-page">
+
+    <h1>Search</h1>
+
+    <!-- ✅ FILTER BUTTONS (ALWAYS VISIBLE) -->
+    
+
+    <!-- 🔍 SEARCH -->
+    <div id="search"></div>
+
+  </main>
+
+  <!-- Pagefind -->
+  <script src="/pagefind/pagefind-ui.js" is:inline></script>
+
+  <script is:inline>
+    let pagefind;
+    let currentFilter = "all";
+
+    window.addEventListener("DOMContentLoaded", () => {
+      pagefind = new PagefindUI({
+        element: "#search",
+        showSubResults: true,
+        showImages: false,
+
+        // ✅ IMPORTANT FIXES
+        showEmptyFilters: true,        // 🔥 keeps filters visible
+        debounceTimeoutMs: 0          // 🔥 instant typing response
+      });
+    });
+
+    function setFilter(event, type) {
+      currentFilter = type;
+
+      const buttons = document.querySelectorAll(".filters button");
+      buttons.forEach(b => b.classList.remove("active"));
+
+      event.target.classList.add("active");
+
+      if (!pagefind) return;
+
+      if (type === "all") {
+        pagefind.setFilter({});
+      } else {
+        pagefind.setFilter({ type: type });
+      }
+    }
+  </script>
+
+</BaseLayout>
+
+<style>
+.search-page {
+  padding-top: 2rem;
+  max-width: 900px;
+}
+
+/* FILTER BUTTONS */
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.filters button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--gray-700);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.filters button.active {
+  background: var(--accent-regular);
+  color: white;
+}
+
+.filters button:hover {
+  background: var(--gray-800);
+}
+</style>
