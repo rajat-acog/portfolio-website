@@ -1,9 +1,6 @@
 ---
 title: "My Blog"
 author: "rajat"
-coauthors:
-  - ankit
-  - sreyash
 position: "Backend Engineer"
 avatar: "/images/rajat.jpg"
 ---
@@ -13,7 +10,7 @@ avatar: "/images/rajat.jpg"
 ## Introduction
 
 <br />
-Building a full-stack webpage means working on both the frontend (what users see) and the backend (how data is handled). It may sound complex, but breaking it into steps makes it manageable.
+Building a full-stack webpage means working on both the frontend (what users see) and the backend (how data is handled). It may sound complex, but breaking it into steps make it manageable.
 <br /><br />
 
 ---
