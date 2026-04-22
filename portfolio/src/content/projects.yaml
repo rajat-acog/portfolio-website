@@ -9,9 +9,9 @@
   status: In Production
   teamSize: 4
   people:
-    - rajat
-    - ankit
-    - priya
+    - rajat-acog
+    - ankit-acog
+    - swati-acog
 
 - name: Real-time Analytics Engine
   slug: realtime-analytics-engine
@@ -24,9 +24,8 @@
   status: Scaling
   teamSize: 5
   people:
-    - rajat
-    - sneha
-    - arjun
+    - rajat-acog
+    - sreyash-acog
 
 - name: Cloud-native Deployment System
   slug: cloud-native-deployment-system
@@ -39,8 +38,8 @@
   status: Development
   teamSize: 3
   people:
-    - ankit
-    - priya
+    - ankit-acog
+    - sreyash-acog
 
 - name: Secure API Gateway
   slug: secure-api-gateway
@@ -53,5 +52,5 @@
   status: In Production
   teamSize: 4
   people:
-    - rajat
-    - arjun
+    - rajat-acog
+    - arjun-acog

@@ -11,8 +11,8 @@ import Icon from '../../../components/Icon.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 // ✅ CONFIG
-const OWNER = "aganitha";
-const REPO = "tech-coe";
+const OWNER = "rajat-acog";
+const REPO = "portfolio-website";
 
 // ==============================
 // ✅ PATHS
@@ -62,9 +62,9 @@ const file = fs.readFileSync(filePath, 'utf-8');
 const { data, content } = matter(file);
 
 // ==============================
-// 🔥 FETCH CONTRIBUTORS
+// 🔥 FETCH CONTRIBUTORS (FIXED)
 // ==============================
-const githubFilePath = `src/content/portfolios/${slug}/${blog}.md`;
+const githubFilePath = `portfolio/src/content/portfolios/${slug}/${blog}.md`;
 
 let contributors = [];
 
@@ -73,46 +73,57 @@ try {
     `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${githubFilePath}`
   );
 
-  const commits = await res.json();
+  const githubData = await res.json();
 
+  if (Array.isArray(githubData)) {
   contributors = [
     ...new Map(
-      commits.map((c) => [
-        c.author?.login,
-        {
-          username: c.author?.login,
-          avatar: c.author?.avatar_url,
-          url: c.author?.html_url,
-        },
-      ])
+      githubData
+        .filter((c) => c.author?.login && c.author?.login !== "web-flow")
+        .map((c) => [
+          c.author.login,
+          {
+            username: c.author.login,
+            avatar: c.author.avatar_url,
+            url: c.author.html_url,
+          },
+        ])
     ).values(),
   ];
+} else {
+    console.error("GitHub API error:", githubData);
+  }
+
 } catch (err) {
-  console.error("GitHub API failed:", err);
+  console.error("GitHub fetch failed:", err);
 }
 
 // ==============================
-// 🔥 NORMALIZE + MAP
+// 🔥 MATCH WITH LOCAL PROFILES
 // ==============================
-const normalize = (u) => u?.split('-')[0]?.toLowerCase();
-
 const allProfiles = await getCollection('portfolios');
 
 const finalContributors = contributors
   .map((c) => {
-    const slugMatch = normalize(c.username);
+    const username = c.username.toLowerCase();
 
     const profile = allProfiles.find((p) =>
-      p.id.split('/')[0].toLowerCase() === slugMatch
+      p.id.split('/')[0].toLowerCase() === username
     );
 
     return {
       ...c,
-      slug: slugMatch,
+      slug: username,
       isInternal: !!profile,
     };
   })
-  .filter((c) => c.slug !== slug);
+  .filter((c) => {
+  // only remove if there are multiple contributors
+  if (contributors.length > 1) {
+    return c.slug !== slug;
+  }
+  return true;
+});
 
 // ==============================
 // 🔥 MARKDOWN
@@ -126,6 +137,10 @@ const processedContent = content.replace(/^##\s(.+)/gm, (_, title) => {
 });
 
 const html = marked.parse(processedContent);
+
+console.log("Contributors:", contributors);
+console.log("Final:", finalContributors);
+
 ---
 
 <BaseLayout title={data.title}>
@@ -138,34 +153,42 @@ const html = marked.parse(processedContent);
       </a>
 
       <div class="blog-header">
-  <Hero title={data.title} tagline={`By ${data.author}`} align="start" />
+        <Hero title={data.title} tagline={`By ${data.author}`} align="start" />
 
-  <!-- 👥 INLINE CONTRIBUTORS -->
-  <div class="contributors-inline">
-    {
-      finalContributors.length > 0 ? (
-        <div class="avatars">
+        <!-- 👇 INLINE CONTRIBUTORS -->
+        <div class="contributors-inline">
+  {
+    finalContributors.length > 0 ? (
+      <div class="contributors-mini">
+        <span class="label">Contributors:</span>
+
+        <div class="contributors-list">
           {finalContributors.map((c) => (
             <a
               href={c.isInternal ? `/portfolio/${c.slug}` : c.url}
               target="_blank"
-              class="avatar"
-              title={c.username}  <!-- tooltip -->
+              class="contributor-item"
+              title={c.username}
             >
               {c.avatar ? (
                 <img src={c.avatar} alt={c.username} />
               ) : (
-                <span>{c.username?.charAt(0).toUpperCase()}</span>
+                <span class="fallback">
+                  {c.username.charAt(0).toUpperCase()}
+                </span>
               )}
+
+              <span class="name">{c.username}</span>
             </a>
           ))}
         </div>
-      ) : (
-        <span class="muted">No other contributors</span>
-      )
-    }
-  </div>
+      </div>
+    ) : (
+      <span class="muted">No other contributors</span>
+    )
+  }
 </div>
+      </div>
     </header>
 
     <!-- BODY -->
@@ -187,52 +210,16 @@ const html = marked.parse(processedContent);
 
       <!-- MAIN -->
       <main class="content">
-
         <article class="blog-content" set:html={html}></article>
-
-        <!-- 🔥 CONTRIBUTORS -->
-        {finalContributors.length > 0 && (
-          <section class="contributors">
-            <h3>Contributors</h3>
-
-            <div class="contributors-grid">
-              {finalContributors.map((c) => (
-                <a
-                  href={c.isInternal ? `/portfolio/${c.slug}` : c.url}
-                  target="_blank"
-                  class="contributor-card"
-                >
-                  {c.avatar ? (
-                    <img src={c.avatar} alt={c.username} />
-                  ) : (
-                    <div class="avatar-fallback">
-                      {c.username?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-
-                  <div class="meta">
-                    <p class="name">{c.username}</p>
-                    <span class={`tag ${c.isInternal ? "internal" : "external"}`}>
-                      {c.isInternal ? "Profile" : "GitHub"}
-                    </span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
-
       </main>
 
     </div>
 
     <ContactCTA />
-
   </div>
 </BaseLayout>
 
 <style>
-/* LAYOUT */
 .layout {
   display: grid;
   grid-template-columns: 240px 1fr;
@@ -240,7 +227,6 @@ const html = marked.parse(processedContent);
   margin-top: 3rem;
 }
 
-/* SIDEBAR */
 .sidebar-inner {
   position: sticky;
   top: 100px;
@@ -250,102 +236,21 @@ const html = marked.parse(processedContent);
   background: var(--gradient-subtle);
 }
 
-.sidebar h4 {
-  margin-bottom: 1rem;
-  font-size: var(--text-sm);
-  color: var(--gray-400);
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar li {
-  margin-bottom: 0.6rem;
-}
-
 .sidebar a {
   text-decoration: none;
   font-size: var(--text-sm);
   color: var(--gray-400);
-  transition: all 0.2s ease;
 }
 
 .sidebar a:hover {
   color: var(--accent-regular);
-  transform: translateX(3px);
 }
 
-/* CONTENT */
 .content {
   background: var(--gradient-subtle);
   border: 1px solid var(--gray-800);
   border-radius: 1.5rem;
   padding: 2.5rem;
-  box-shadow: var(--shadow-md);
-}
-
-.blog-content {
-  max-width: 70ch;
-  line-height: 1.9;
-  font-size: var(--text-md);
-  color: var(--gray-200);
-}
-
-.blog-content h2 {
-  margin-top: 3rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--gray-800);
-}
-
-.blog-content p {
-  margin-bottom: 1.5rem;
-}
-
-/* CONTRIBUTORS */
-.contributors {
-  margin-top: 4rem;
-}
-
-.contributors-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-}
-
-.contributor-card {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 0.8rem;
-  border-radius: 0.8rem;
-  border: 1px solid var(--gray-800);
-  background: var(--gradient-subtle);
-  text-decoration: none;
-  color: inherit;
-}
-
-.contributor-card img,
-.avatar-fallback {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-}
-
-/* MOBILE */
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    display: none;
-  }
-
-  .content {
-    padding: 1.5rem;
-  }
 }
 
 .blog-header {
@@ -354,59 +259,116 @@ const html = marked.parse(processedContent);
   gap: 0.4rem;
 }
 
-/* INLINE CONTRIBUTORS */
 .contributors-inline {
   margin-top: -0.5rem;
 }
 
-/* AVATAR GROUP */
 .avatars {
   display: flex;
-  align-items: center;
 }
 
-/* EACH AVATAR */
 .avatar {
   width: 26px;
   height: 26px;
   border-radius: 50%;
   overflow: hidden;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: var(--accent-regular);
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-
+  margin-left: -6px;
   border: 2px solid var(--gray-900);
-  margin-left: -6px; /* overlap effect */
-
-  text-decoration: none;
-  transition: transform 0.2s ease;
 }
 
 .avatar:first-child {
   margin-left: 0;
 }
 
-.avatar:hover {
-  transform: scale(1.1);
-  z-index: 2;
-}
-
-/* IMAGE INSIDE */
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* EMPTY STATE */
 .muted {
   font-size: 0.8rem;
   color: var(--gray-500);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}
+
+/* MINI CONTRIBUTORS */
+.contributors-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: -0.4rem;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+/* LIST */
+.contributors-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ITEM */
+.contributor-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+
+  background: var(--gray-900);
+  border: 1px solid var(--gray-800);
+
+  text-decoration: none;
+  color: var(--gray-300);
+
+  font-size: 0.7rem;
+
+  transition: all 0.2s ease;
+}
+
+.contributor-item:hover {
+  background: var(--gray-800);
+  color: white;
+}
+
+/* AVATAR */
+.contributor-item img,
+.fallback {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.6rem;
+  font-weight: 600;
+
+  background: var(--accent-regular);
+  color: white;
+}
+
+/* NAME */
+.name {
+  white-space: nowrap;
 }
 </style>
