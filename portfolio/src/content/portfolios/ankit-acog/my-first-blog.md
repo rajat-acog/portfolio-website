@@ -16,7 +16,7 @@ Cricket is not just a sport—it’s an emotion for millions of fans around the 
 ## A Global Phenomenon
 
 <br />
-Originating in England, cricket has grown into a global sport, especially popular in countries like India, Australia, England, and South Africa. Major tournaments like the ICC World Cup and T20 leagues bring together top players and create unforgettable moments.
+Originating in England, cricket has grown into a global sport, especially popular in countries like India, Australia, England, and South Africa. Major tournaments like the ICC World Cup and T20 leagues bring together top players and create unforgetttable moments.
 <br /><br />
 
 ---
