@@ -1,9 +1,6 @@
 ---
 title: "My First Blog"
-author: "ankit"
-coauthors:
-  - rajat
-  - harsh
+author: "ankit-acog"
 position: "Frontend Engineer"
 avatar: "/images/ankit.jpg"
 ---

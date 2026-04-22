@@ -14,7 +14,9 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 const OWNER = "aganitha";
 const REPO = "tech-coe";
 
-// ✅ Dynamic paths
+// ==============================
+// ✅ PATHS
+// ==============================
 export async function getStaticPaths() {
   const base = './src/content/portfolios';
   const users = fs.readdirSync(base);
@@ -23,6 +25,8 @@ export async function getStaticPaths() {
 
   for (const user of users) {
     const userDir = path.join(base, user);
+    if (!fs.statSync(userDir).isDirectory()) continue;
+
     const files = fs.readdirSync(userDir);
 
     files
@@ -40,10 +44,14 @@ export async function getStaticPaths() {
   return paths;
 }
 
-// ✅ Params
+// ==============================
+// ✅ PARAMS
+// ==============================
 const { slug, blog } = Astro.params;
 
-// ✅ Read blog file
+// ==============================
+// ✅ READ FILE
+// ==============================
 const filePath = path.join(
   'src/content/portfolios',
   slug,
@@ -54,52 +62,61 @@ const file = fs.readFileSync(filePath, 'utf-8');
 const { data, content } = matter(file);
 
 // ==============================
-// 🔥 GITHUB CO-AUTHOR FETCH
+// 🔥 FETCH CONTRIBUTORS
 // ==============================
-
-// path inside repo
 const githubFilePath = `src/content/portfolios/${slug}/${blog}.md`;
 
 let contributors = [];
 
 try {
   const res = await fetch(
-    `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${githubFilePath}`,
-    {
-      headers: {
-        Authorization: `Bearer ${import.meta.env.GITHUB_TOKEN || ''}`,
-      },
-    }
+    `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${githubFilePath}`
   );
 
   const commits = await res.json();
 
   contributors = [
-    ...new Set(
-      commits
-        .map((c) => c.author?.login)
-        .filter(Boolean)
-    ),
+    ...new Map(
+      commits.map((c) => [
+        c.author?.login,
+        {
+          username: c.author?.login,
+          avatar: c.author?.avatar_url,
+          url: c.author?.html_url,
+        },
+      ])
+    ).values(),
   ];
 } catch (err) {
   console.error("GitHub API failed:", err);
 }
 
 // ==============================
-// 🔥 MAP TO YOUR PROFILES
+// 🔥 NORMALIZE + MAP
 // ==============================
+const normalize = (u) => u?.split('-')[0]?.toLowerCase();
 
 const allProfiles = await getCollection('portfolios');
 
-const coauthorProfiles = allProfiles.filter((p) => {
-  const id = p.id.split('/')[0];
-  return contributors.includes(id);
-});
+const finalContributors = contributors
+  .map((c) => {
+    const slugMatch = normalize(c.username);
+
+    const profile = allProfiles.find((p) =>
+      p.id.split('/')[0].toLowerCase() === slugMatch
+    );
+
+    return {
+      ...c,
+      slug: slugMatch,
+      isInternal: !!profile,
+    };
+  })
+  .filter((c) => c.slug !== slug);
 
 // ==============================
-// 🔥 MARKDOWN → HTML
+// 🔥 MARKDOWN
 // ==============================
-
 const headings = [];
 
 const processedContent = content.replace(/^##\s(.+)/gm, (_, title) => {
@@ -120,7 +137,35 @@ const html = marked.parse(processedContent);
         <Icon icon="arrow-left" /> Back to Profile
       </a>
 
-      <Hero title={data.title} tagline={`By ${data.author}`} align="start" />
+      <div class="blog-header">
+  <Hero title={data.title} tagline={`By ${data.author}`} align="start" />
+
+  <!-- 👥 INLINE CONTRIBUTORS -->
+  <div class="contributors-inline">
+    {
+      finalContributors.length > 0 ? (
+        <div class="avatars">
+          {finalContributors.map((c) => (
+            <a
+              href={c.isInternal ? `/portfolio/${c.slug}` : c.url}
+              target="_blank"
+              class="avatar"
+              title={c.username}  <!-- tooltip -->
+            >
+              {c.avatar ? (
+                <img src={c.avatar} alt={c.username} />
+              ) : (
+                <span>{c.username?.charAt(0).toUpperCase()}</span>
+              )}
+            </a>
+          ))}
+        </div>
+      ) : (
+        <span class="muted">No other contributors</span>
+      )
+    }
+  </div>
+</div>
     </header>
 
     <!-- BODY -->
@@ -128,14 +173,16 @@ const html = marked.parse(processedContent);
 
       <!-- SIDEBAR -->
       <aside class="sidebar">
-        <h4>On this page</h4>
-        <ul>
-          {headings.map((h) => (
-            <li>
-              <a href={`#${h.id}`}>{h.title}</a>
-            </li>
-          ))}
-        </ul>
+        <div class="sidebar-inner">
+          <h4>On this page</h4>
+          <ul>
+            {headings.map((h) => (
+              <li>
+                <a href={`#${h.id}`}>{h.title}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </aside>
 
       <!-- MAIN -->
@@ -143,26 +190,36 @@ const html = marked.parse(processedContent);
 
         <article class="blog-content" set:html={html}></article>
 
-        <!-- 🔥 CO-AUTHORS SECTION -->
-        {coauthorProfiles.length > 1 && (
-          <div class="coauthors">
+        <!-- 🔥 CONTRIBUTORS -->
+        {finalContributors.length > 0 && (
+          <section class="contributors">
             <h3>Contributors</h3>
 
-            <div class="coauthor-grid">
-              {coauthorProfiles.map((person) => {
-                const id = person.id.split('/')[0];
-
-                return (
-                  <a href={`/portfolio/${id}`} class="coauthor-card">
-                    <div class="avatar">
-                      {id.charAt(0).toUpperCase()}
+            <div class="contributors-grid">
+              {finalContributors.map((c) => (
+                <a
+                  href={c.isInternal ? `/portfolio/${c.slug}` : c.url}
+                  target="_blank"
+                  class="contributor-card"
+                >
+                  {c.avatar ? (
+                    <img src={c.avatar} alt={c.username} />
+                  ) : (
+                    <div class="avatar-fallback">
+                      {c.username?.charAt(0).toUpperCase()}
                     </div>
-                    <p>{id}</p>
-                  </a>
-                );
-              })}
+                  )}
+
+                  <div class="meta">
+                    <p class="name">{c.username}</p>
+                    <span class={`tag ${c.isInternal ? "internal" : "external"}`}>
+                      {c.isInternal ? "Profile" : "GitHub"}
+                    </span>
+                  </div>
+                </a>
+              ))}
             </div>
-          </div>
+          </section>
         )}
 
       </main>
@@ -175,32 +232,181 @@ const html = marked.parse(processedContent);
 </BaseLayout>
 
 <style>
-.coauthors {
+/* LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+/* SIDEBAR */
+.sidebar-inner {
+  position: sticky;
+  top: 100px;
+  padding: 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
+}
+
+.sidebar h4 {
+  margin-bottom: 1rem;
+  font-size: var(--text-sm);
+  color: var(--gray-400);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin-bottom: 0.6rem;
+}
+
+.sidebar a {
+  text-decoration: none;
+  font-size: var(--text-sm);
+  color: var(--gray-400);
+  transition: all 0.2s ease;
+}
+
+.sidebar a:hover {
+  color: var(--accent-regular);
+  transform: translateX(3px);
+}
+
+/* CONTENT */
+.content {
+  background: var(--gradient-subtle);
+  border: 1px solid var(--gray-800);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.blog-content {
+  max-width: 70ch;
+  line-height: 1.9;
+  font-size: var(--text-md);
+  color: var(--gray-200);
+}
+
+.blog-content h2 {
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-800);
+}
+
+.blog-content p {
+  margin-bottom: 1.5rem;
+}
+
+/* CONTRIBUTORS */
+.contributors {
   margin-top: 4rem;
 }
 
-.coauthor-grid {
-  display: flex;
+.contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
-.coauthor-card {
+.contributor-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
   text-decoration: none;
   color: inherit;
-  text-align: center;
 }
 
-.avatar {
-  width: 60px;
-  height: 60px;
+.contributor-card img,
+.avatar-fallback {
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  background: var(--accent-regular);
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .content {
+    padding: 1.5rem;
+  }
+}
+
+.blog-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* INLINE CONTRIBUTORS */
+.contributors-inline {
+  margin-top: -0.5rem;
+}
+
+/* AVATAR GROUP */
+.avatars {
+  display: flex;
+  align-items: center;
+}
+
+/* EACH AVATAR */
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  background: var(--accent-regular);
   color: white;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  border: 2px solid var(--gray-900);
+  margin-left: -6px; /* overlap effect */
+
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.avatar:first-child {
+  margin-left: 0;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+  z-index: 2;
+}
+
+/* IMAGE INSIDE */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* EMPTY STATE */
+.muted {
+  font-size: 0.8rem;
+  color: var(--gray-500);
 }
 </style>

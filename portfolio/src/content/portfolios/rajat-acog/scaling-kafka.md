@@ -1,6 +1,6 @@
 ---
 title: "My Blog"
-author: "rajat"
+author: "rajat-acog"
 position: "Backend Engineer"
 avatar: "/images/rajat.jpg"
 ---
