@@ -153,13 +153,14 @@
 //   }),
 // };
 
+
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 const portfolios = defineCollection({
   loader: glob({
     base: './src/content/portfolios',
-    pattern: '**/*.md',   // 🔥 VERY IMPORTANT (recursive)
+    pattern: '**/!(*README).md', // ✅ exclude README
   }),
 
   schema: z.object({
