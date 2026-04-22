@@ -2,8 +2,8 @@
 
 title: "Mastering Focus in a Distracted World"
 author: "harleen-acog"
-position:"QA Engineer"
-avatar:"ddd"
+position: "QA Engineer"
+avatar: "ddd"
 ---
 
 ## 🧠 Why Focus Matters
