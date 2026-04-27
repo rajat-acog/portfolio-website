@@ -169,8 +169,27 @@ const recentActivity = entries
     </div>
 
     <div class="project-footer">
-      <span>Explore →</span>
-    </div>
+
+  <div class="people">
+    {project.people?.slice(0, 4).map((person) => (
+      <img
+        src={`https://github.com/${person}.png`}
+        alt={person}
+        title={person}
+        class="avatar"
+      />
+    ))}
+
+    {project.people?.length > 4 && (
+      <span class="more">+{project.people.length - 4}</span>
+    )}
+  </div>
+
+  <span class="count">
+    {project.people?.length || 0} members
+  </span>
+
+</div>
 
   </a>
 </li>
@@ -434,6 +453,22 @@ a {
   );
   opacity: 0.3;
   pointer-events: none;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+
+  border: 2px solid var(--gray-900);
+  margin-left: -6px;
+  transition: 0.2s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+  z-index: 10;
 }
 
 </style>
