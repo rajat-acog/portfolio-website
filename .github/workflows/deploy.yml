@@ -36,4 +36,4 @@ jobs:
             docker pull dockerhub.aganitha.ai:4443/rajat-assignment/astro-blog:latest
             docker stop rajat-assignment || true
             docker rm rajat-assignment || true
-            docker run -d -p 3000:80 --name rajat-assignment dockerhub.aganitha.ai:4443/rajat-assignment/astro-blog:latest
+            docker run -d -p 3000:4321 --name rajat-assignment dockerhub.aganitha.ai:4443/rajat-assignment/astro-blog:latest
