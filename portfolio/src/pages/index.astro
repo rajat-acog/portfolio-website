@@ -29,7 +29,7 @@ entries.forEach((entry) => {
     position: entry.data.position ?? "Contributor",
 
     // 🔥 GitHub avatar (no API needed)
-    avatar: entry.data.avatar || `https://github.com/${slug}.png`,
+    avatar: `https://github.com/${slug}.png` || entry.data.avatar,
 
     description: entry.data.description ?? "Writes technical blogs",
   });
