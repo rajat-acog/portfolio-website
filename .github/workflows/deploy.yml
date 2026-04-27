@@ -33,7 +33,13 @@ jobs:
           port: 2322
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            cd ~
+
+            # pull latest image
             docker pull dockerhub.aganitha.ai:4443/rajat-assignment/astro-blog:latest
-            docker stop rajat-assignment || true
-            docker rm rajat-assignment || true
-            docker run -d -p 3000:80 --name rajat-assignment dockerhub.aganitha.ai:4443/rajat-assignment/astro-blog:latest
+
+            # stop existing container (if running via compose)
+            docker compose down || true
+
+            # start again with latest image
+            docker compose up -d
