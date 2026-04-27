@@ -20,7 +20,7 @@ jobs:
         run: docker build -t astro-app ./portfolio
 
       - name: Tag Image
-        run: docker tag astro-app dockerhub.aganitha.ai:4443/chem/rajat-assignment:latest
+        run: docker tag astro-app dockerhub.aganitha.ai:4443/rajat-assignment:latest
 
       - name: Push Image
         run: docker push dockerhub.aganitha.ai:4443/rajat-assignment:latest
