@@ -8,7 +8,7 @@ avatar: "aaa"
 
 ## Introduction
 
-Building a full-stack webpage means working on both the frontend (what users see) and the backend (how data is handled). It may sound complex, but breaking into steps make it manageable.
+Building a full-stack webpage means working on both the frontend (what users see) and the backend (how data is handled). It may sound complex, but breaking it into steps make it manageable.
 
 ### Step 1: Plan Your Project
 
