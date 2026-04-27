@@ -28,8 +28,9 @@ jobs:
       - name: Deploy to own3
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
+          host: own3.aganitha.ai
+          username: brajat
+          port: 2322
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             docker pull dockerhub.aganitha.ai:4443/chem/astro-app:latest
