@@ -5,15 +5,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout title="Search">
   <main class="wrapper search-page">
 
-    <h1>Search</h1>
+  <!-- 🔥 HERO -->
+  <section class="search-hero">
+    <h1 class="search-title">Search Anything</h1>
+    <p class="search-subtitle">
+      Find profiles, blogs, and projects instantly.
+    </p>
+  </section>
 
-    <!-- ✅ FILTER BUTTONS (ALWAYS VISIBLE) -->
-    
 
-    <!-- 🔍 SEARCH -->
-    <div id="search"></div>
 
-  </main>
+  <!-- 🔍 SEARCH -->
+  <div class="search-container">
+  <div id="search"></div>
+</div>
+
+</main>
 
   <!-- Pagefind -->
   <script src="/pagefind/pagefind-ui.js" is:inline></script>
@@ -24,14 +31,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     window.addEventListener("DOMContentLoaded", () => {
       pagefind = new PagefindUI({
-        element: "#search",
-        showSubResults: true,
-        showImages: false,
+  element: "#search",
+  showSubResults: true,
+  showImages: false,
 
-        // ✅ IMPORTANT FIXES
-        showEmptyFilters: true,        // 🔥 keeps filters visible
-        debounceTimeoutMs: 0          // 🔥 instant typing response
-      });
+  showEmptyFilters: true,
+  debounceTimeoutMs: 0,
+
+  // 🔥 cleaner UI
+  resetStyles: false,
+  translations: {
+    placeholder: "Search profiles, blogs, projects...",
+  }
+});
     });
 
     function setFilter(event, type) {
@@ -60,28 +72,162 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   max-width: 900px;
 }
 
-/* FILTER BUTTONS */
+/* 🔥 HERO */
+.search-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.search-title {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+}
+
+.search-subtitle {
+  margin-top: 0.5rem;
+  color: var(--gray-400);
+  font-size: 0.9rem;
+}
+
+/* 🔥 FILTERS */
 .filters {
   display: flex;
+  justify-content: center;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
 .filters button {
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--gray-700);
+
   background: transparent;
   cursor: pointer;
+
   font-size: var(--text-sm);
+  transition: all 0.2s ease;
 }
 
 .filters button.active {
   background: var(--accent-regular);
   color: white;
+  border-color: var(--accent-regular);
 }
 
 .filters button:hover {
   background: var(--gray-800);
 }
+
+/* 🔥 SEARCH INPUT (Pagefind override) */
+#search input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+
+  border-radius: 999px;
+  border: 1px solid var(--gray-800);
+
+  background: var(--gray-900);
+  color: var(--gray-100);
+
+  font-size: 0.9rem;
+  outline: none;
+
+  transition: all 0.2s ease;
+}
+
+#search input:focus {
+  border-color: var(--accent-regular);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* 🔥 RESULTS GRID */
+#search .pagefind-ui__results {
+  margin-top: 1.5rem;
+
+  display: grid;
+  gap: 1rem;
+}
+
+/* 🔥 RESULT CARD */
+#search .pagefind-ui__results {
+  margin-top: 1.5rem;
+
+  display: grid;
+  gap: 1rem;
+
+  width: 100%;
+}
+
+#search .pagefind-ui__result:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  border-color: var(--accent-regular);
+}
+
+/* TITLE */
+#search .pagefind-ui__result-link {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-0);
+  text-decoration: none;
+}
+
+/* META */
+#search .pagefind-ui__result-meta {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.3rem;
+}
+
+/* EXCERPT */
+#search .pagefind-ui__result-excerpt {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+}
+
+/* 🔥 EMPTY STATE */
+#search .pagefind-ui__message {
+  text-align: center;
+  margin-top: 2rem;
+  color: var(--gray-400);
+}
+
+/* 🔥 SMOOTH FEEL */
+a {
+  transition: all 0.2s ease;
+}
+
+.filters {
+  position: sticky;
+  top: 80px;
+  z-index: 10;
+
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+
+  padding: 0.5rem;
+  border-radius: 999px;
+}
+
+.search-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+#search {
+  width: 100%;
+  max-width: 700px;
+}
+
+#search input {
+  text-align: center;
+}
+#search input:focus {
+  transform: scale(1.02);
+}
+
 </style>

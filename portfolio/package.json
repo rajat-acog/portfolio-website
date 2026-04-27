@@ -14,7 +14,9 @@
     "data": "node scripts/generateProfiles.js",
     "sync": "node scripts/syncContent.js",
   "validate": "node scripts/validateContent.js",
-  "build:all": "npm run validate && astro build && npx pagefind --site dist"
+  "build:all": "npm run validate && astro build && npx pagefind --site dist",
+  "shoot": "git pull && astro build && npx pagefind --site dist && astro preview",
+  "profiles": "node scripts/fetchProfiles.js"
   },
   "dependencies": {
     "@faker-js/faker": "^10.4.0",

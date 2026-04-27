@@ -2,6 +2,7 @@
 
 title: "Mastering Focus in a Distracted World"
 author: "harleen-acog"
+date: "2025-04-23"
 position: "QA Engineer"
 avatar: "ddd"
 ---

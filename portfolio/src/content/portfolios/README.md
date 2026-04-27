@@ -51,8 +51,8 @@ Use this structure:
 ---
 title: "Your Blog Title"
 author: "your-username"
+date: "YYYY-MM-DD"
 position: "your-position at aganitha"
-date: "2026-04-22"
 ---
 
 ## 🚀 Introduction

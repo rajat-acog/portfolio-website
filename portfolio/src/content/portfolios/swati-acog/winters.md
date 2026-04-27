@@ -1,10 +1,10 @@
 ---
 title: "My Winter Blog"
 author: "swati-acog"
+date: "2025-04-25"
 position: "Backend Engineer"
 avatar: "/images/swati.jpg"
 ---
-
 
 # ❄️ Winter Vibes: A Cozy Season
 
@@ -12,9 +12,9 @@ Winter brings a calm and cozy charm that makes everything feel a little slower a
 
 ## 🌨️ What Makes Winter Special?
 
-- Warm cups of tea or coffee feel extra comforting  
-- Cozy blankets and late-night movies hit differently  
-- Cool weather makes morning walks refreshing  
+- Warm cups of tea or coffee feel extra comforting
+- Cozy blankets and late-night movies hit differently
+- Cool weather makes morning walks refreshing
 
 ## 🧣 Simple Winter Joys
 

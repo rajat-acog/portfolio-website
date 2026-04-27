@@ -23,14 +23,17 @@ entries.forEach((entry) => {
   const slug = author.toLowerCase();
 
   if (!profileMap.has(slug)) {
-    profileMap.set(slug, {
-      slug,
-      name: author,
-      position: entry.data.position ?? "Contributor",
-      avatar: entry.data.avatar ?? "https://via.placeholder.com/300",
-      description: entry.data.description ?? "Writes technical blogs",
-    });
-  }
+  profileMap.set(slug, {
+    slug,
+    name: author,
+    position: entry.data.position ?? "Contributor",
+
+    // 🔥 GitHub avatar (no API needed)
+    avatar: entry.data.avatar || `https://github.com/${slug}.png`,
+
+    description: entry.data.description ?? "Writes technical blogs",
+  });
+}
 });
 
 // ✅ FINAL PROFILES ARRAY
@@ -38,6 +41,16 @@ const profiles = Array.from(profileMap.values());
 
 // 🔥 PROJECTS
 const projects = (await getCollection('projects'))[0]?.data ?? [];
+
+// 🔥 GLOBAL RECENT ACTIVITY (ALL BLOGS)
+const recentActivity = entries
+  .sort((a, b) => {
+    const dateA = new Date(a.data.date || 0);
+    const dateB = new Date(b.data.date || 0);
+    return dateB - dateA;
+  })
+  .slice(0, 6); // show latest 6
+
 ---
 
 <BaseLayout>
@@ -60,23 +73,74 @@ const projects = (await getCollection('projects'))[0]?.data ?? [];
     profiles.length > 0 ? (
       profiles.map((person) => (
         <li>
-          <a href={`/portfolio/${person.slug}`} style="text-decoration:none; color:inherit;">
+          <a href={`/portfolio/${person.slug}`} style="text-decoration:none; color:inherit;" class="profile-link">
             <ProfileCard
               name={person.name}
               position={person.position}
               description={person.description}
               avatar={person.avatar}   <!-- ✅ FIXED -->
+			  linkedin="#";
+  			  github="#";
             />
           </a>
         </li>
       ))
     ) : (
-      <p>No profiles found.</p>
+      <div class="empty-state">
+  <p>No contributors yet 🚀</p>
+</div>
     )
   }
 </Grid>
 			</div>
 		</section>
+
+
+<!-- 🔥 GLOBAL ACTIVITY -->
+<section class="section activity-section">
+  <header class="margb section-header">
+    <h2>Recent Activity</h2>
+  </header>
+
+  {
+    recentActivity.length > 0 ? (
+      <ul class="timeline">
+        {recentActivity.map((blog) => {
+          const [authorSlug, blogSlug] = blog.id.split('/');
+
+          return (
+            <li class="timeline-item">
+              <div class="timeline-dot"></div>
+
+              <div class="timeline-content">
+                <a
+                  href={`/portfolio/${authorSlug}/${blogSlug}`}
+                  class="timeline-link"
+                >
+                  {blog.data.title}
+                </a>
+
+                <span class="timeline-date">
+                  {blog.data.date
+                    ? new Date(blog.data.date).toLocaleDateString()
+                    : "Recently"}
+                </span>
+
+                {/* 🔥 NEW: show author */}
+                <span class="timeline-author">
+                  by {blog.data.author}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    ) : (
+      <p class="empty-state">No activity yet 🚀</p>
+    )
+  }
+</section>
+
 
 		<!-- 🔥 PROJECTS SECTION -->
 		<section class="section with-cta">
@@ -90,18 +154,31 @@ const projects = (await getCollection('projects'))[0]?.data ?? [];
 						projects.length > 0 ? (
 							projects.slice(0, 6).map((project) => (
 								<li class="project-card">
-									<a href={`/projects/${project.slug}`} class="card-link">
-										<h3>{project.name}</h3>
-										<p>{project.description}</p>
+  <a href={`/projects/${project.slug}`} class="project-link">
 
-										<p class="people-count">
-											👥 {project.people.length} members
-										</p>
-									</a>
-								</li>
+    <div class="project-content">
+      <h3 class="project-title">{project.name}</h3>
+
+      <p class="project-desc">
+        {project.description}
+      </p>
+
+      <p class="project-meta">
+        👥 {project.people.length} members
+      </p>
+    </div>
+
+    <div class="project-footer">
+      <span>Explore →</span>
+    </div>
+
+  </a>
+</li>
 							))
 						) : (
-							<p>No projects found.</p>
+							<div class="empty-state">
+  <p>No projects yet 🚀</p>
+</div>
 						)
 					}
 				</ul>
@@ -186,4 +263,177 @@ const projects = (await getCollection('projects'))[0]?.data ?? [];
 	display: flex;
 	justify-content: center;
 }
+
+.profile-link {
+  display: block;
+  border-radius: 1.2rem;
+
+  transition: all 0.18s ease;
+}
+
+.profile-link:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.project-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 1.4rem;
+  border-radius: 1.2rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
+
+  min-height: 180px;
+
+  text-decoration: none;
+  color: inherit;
+
+  transition: all 0.18s ease;
+}
+
+.project-link:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  border-color: var(--accent-regular);
+}
+
+.project-title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--gray-0);
+}
+
+.project-desc {
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  margin-top: 0.6rem;
+}
+
+.project-meta {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.project-footer {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--accent-regular);
+  font-weight: 600;
+}
+
+.section {
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--gray-800);
+  background: var(--gradient-subtle);
+}
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--gray-400);
+}
+
+a {
+  transition: all 0.2s ease;
+}
+
+/* ================= ACTIVITY ================= */
+
+.activity-section {
+  margin-top: 1rem;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* vertical line */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gray-800);
+}
+
+/* item */
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+/* dot */
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--accent-regular);
+  border-radius: 50%;
+  position: absolute;
+  left: -2px;
+  top: 6px;
+}
+
+/* content */
+.timeline-content {
+  margin-left: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* title */
+.timeline-link {
+  font-size: 0.9rem;
+  color: var(--gray-100);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.timeline-link:hover {
+  color: var(--accent-regular);
+}
+
+/* date */
+.timeline-date {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  margin-top: 0.2rem;
+}
+
+/* 🔥 author line (NEW) */
+.timeline-author {
+  font-size: 0.7rem;
+  color: var(--gray-400);
+}
+
+.activity-section {
+  position: relative;
+}
+
+/* subtle highlight */
+.activity-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    var(--accent-subtle-overlay),
+    transparent
+  );
+  opacity: 0.3;
+  pointer-events: none;
+}
+
 </style>

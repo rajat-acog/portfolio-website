@@ -166,6 +166,7 @@ const portfolios = defineCollection({
   schema: z.object({
     title: z.string(),
     author: z.string(),
+    date: z.coerce.date().optional(),
     position: z.string().optional(),
     avatar: z.string().optional(),
   }),
@@ -178,7 +179,16 @@ const projects = defineCollection({
   }),
 });
 
+const profiles = defineCollection({
+  loader: glob({
+    base: './src/content',
+    pattern: 'profiles.yaml',
+  }),
+});
+
 export const collections = {
   portfolios,
   projects,
+  profiles,
 };
+
