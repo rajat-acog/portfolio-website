@@ -1,6 +1,8 @@
 FROM node:22-alpine AS builder
 
 WORKDIR /app
+
+# 👇 IMPORTANT: copy current context (portfolio folder)
 COPY . .
 
 RUN npm install
