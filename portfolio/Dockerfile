@@ -5,8 +5,8 @@ WORKDIR /app
 # ✅ correct for your setup
 COPY . .
 
-RUN bun install
-RUN bun run build
+RUN npm install
+RUN npm run build
 
 FROM nginx:alpine
 
