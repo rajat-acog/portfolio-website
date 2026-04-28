@@ -13,7 +13,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install dependencies & build Astro
+      # ✅ FIX: Use correct Node version
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Install & build
       - name: Install dependencies
         run: npm install
         working-directory: ./portfolio
@@ -22,7 +28,7 @@ jobs:
         run: npm run build
         working-directory: ./portfolio
 
-      # Copy dist folder to server
+      # Copy dist to server
       - name: Copy dist to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -33,7 +39,7 @@ jobs:
           source: "portfolio/dist"
           target: "~/astro-dist"
 
-      # Copy dist into running container
+      # Update running container
       - name: Update running container
         uses: appleboy/ssh-action@v1
         with:
@@ -42,13 +48,5 @@ jobs:
           port: 2322
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # make sure container exists
-            docker ps | grep astro-blog || echo "Container not running"
-
-            # remove old files inside container
             docker exec astro-blog rm -rf /usr/share/nginx/html/*
-
-            # copy new dist into container
             docker cp ~/astro-dist/portfolio/dist/. astro-blog:/usr/share/nginx/html/
-
-            echo "✅ Deployment updated without restarting container"
